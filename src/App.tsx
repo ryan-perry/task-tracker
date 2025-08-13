@@ -13,6 +13,7 @@ function App() {
   const [filter, setFilter] = useState<TaskState>('all');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState<boolean>(false);
 
   const saveToStorage = (tasksToSave: Task[]) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasksToSave));
@@ -23,9 +24,13 @@ function App() {
     return data ? JSON.parse(data) : [];
   };
 
-  const loadTasks = async () => {
+  const loadTasks = async (isRetry: boolean = false) => {
     try {
-      setLoading(true);
+      if (isRetry) {
+        setRetrying(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
       const apiTasks = await fetchTasks(10);
       setTasks(apiTasks);
@@ -34,7 +39,11 @@ function App() {
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load tasks.');
     } finally {
-      setLoading(false);
+      if (isRetry) {
+        setRetrying(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -116,8 +125,16 @@ function App() {
                 <Button
                   color="inherit"
                   size="small"
-                  onClick={loadTasks}>
-                  Retry
+                  onClick={loadTasks}
+                  disabled={retrying}>
+                  {retrying ? (
+                    <CircularProgress
+                      size={16}
+                      color="inherit"
+                    />
+                  ) : (
+                    'Retry'
+                  )}
                 </Button>
               }
               sx={{ mb: 2 }}>
