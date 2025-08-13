@@ -6,11 +6,22 @@ import { Button, Container, Typography, Paper, Alert, CircularProgress, Box } fr
 import TaskFilter from './components/TaskFilter';
 import { fetchTasks } from './api';
 
+const STORAGE_KEY = 'task-tracker';
+
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<TaskState>('all');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const saveToStorage = (tasksToSave: Task[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasksToSave));
+  };
+
+  const loadFromStorage = (): Task[] => {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  };
 
   const loadTasks = async () => {
     try {
@@ -18,6 +29,7 @@ function App() {
       setError(null);
       const apiTasks = await fetchTasks(10);
       setTasks(apiTasks);
+      saveToStorage(apiTasks);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load tasks.');
@@ -26,9 +38,21 @@ function App() {
     }
   };
 
+  // load from storage first, then try fetching
   useEffect(() => {
+    const storedTasks = loadFromStorage();
+
+    if (storedTasks.length > 0) {
+      setTasks(storedTasks);
+      setLoading(false);
+    }
     loadTasks();
   }, []);
+
+  // keep storage in sync when tasks change
+  useEffect(() => {
+    saveToStorage(tasks);
+  }, [tasks]);
 
   // add task
   const addTask = (text: string) => {
