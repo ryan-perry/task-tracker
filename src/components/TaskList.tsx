@@ -1,5 +1,5 @@
 import type { Task } from '../types';
-import { IconButton, List, ListItem, ListItemText, Checkbox } from '@mui/material';
+import { IconButton, List, ListItem, ListItemText, Checkbox, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 interface TaskListProps {
@@ -9,6 +9,10 @@ interface TaskListProps {
 }
 
 export default function TaskList({ tasks, onToggle, onDelete }: TaskListProps) {
+  if (tasks.length === 0) {
+    return <Typography variant="body2">No tasks to show.</Typography>;
+  }
+
   return (
     <>
       <List>
