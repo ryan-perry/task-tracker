@@ -20,7 +20,6 @@ function App() {
       setTasks(apiTasks);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-      console.error(e);
       setError(e?.message ?? 'Failed to load tasks.');
     } finally {
       setLoading(false);
