@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Task, TaskState } from './types';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
-import { Container, Typography, Paper, Alert, CircularProgress, Box } from '@mui/material';
+import { Button, Container, Typography, Paper, Alert, CircularProgress, Box } from '@mui/material';
 import TaskFilter from './components/TaskFilter';
 import { fetchTasks } from './api';
 
@@ -89,6 +89,14 @@ function App() {
           {error && (
             <Alert
               severity="error"
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={loadTasks}>
+                  Retry
+                </Button>
+              }
               sx={{ mb: 2 }}>
               {error}
             </Alert>
