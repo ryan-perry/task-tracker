@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import type { TaskState } from './types';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 import {
@@ -17,10 +15,11 @@ import TaskFilter from './components/TaskFilter';
 import { useTasks } from './hooks/useTasks';
 
 function App() {
-  const [filter, setFilter] = useState<TaskState>('all');
-
   const {
-    tasks,
+    filteredTasks,
+    filter,
+    setFilter,
+    completedCount,
     loading,
     retrying,
     error,
@@ -31,19 +30,6 @@ function App() {
     handleToggleTask,
     handleDeleteTask,
   } = useTasks();
-
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === 'active') {
-      return !task.completed;
-    }
-    if (filter === 'done') {
-      return task.completed;
-    }
-
-    return true;
-  });
-
-  const completedCount = tasks.filter((t) => t.completed).length;
 
   return (
     <>
@@ -62,7 +48,7 @@ function App() {
           <Typography
             variant="subtitle1"
             gutterBottom>
-            Completed: {completedCount} / {tasks.length}
+            Completed: {completedCount} / {filteredTasks.length}
           </Typography>
 
           {/* error */}

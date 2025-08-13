@@ -32,7 +32,7 @@ export default function TaskList({ tasks, onToggle, onDelete }: TaskListProps) {
             />
             <ListItemText
               primary={task.text}
-              sx={{ textDecoration: task.completed ? 'line-through' : 'none' }}
+              sx={{ textDecoration: task.completed ? 'line-through' : 'none', fontStyle: 'italic' }}
             />
           </ListItem>
         ))}

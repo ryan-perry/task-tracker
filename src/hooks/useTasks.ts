@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import type { Task } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import type { Task, TaskState } from '../types';
 import { fetchTasks, addTask, toggleTask, deleteTask } from '../api';
 
 type Severity = 'success' | 'error' | 'info';
@@ -15,6 +15,7 @@ export function useTasks() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
+  const [filter, setFilter] = useState<TaskState>('all');
 
   // snackbar state
   const [snackbar, setSnackbar] = useState<SnackbarType>({
@@ -132,8 +133,28 @@ export function useTasks() {
     }
   };
 
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (filter === 'active') {
+        return !task.completed;
+      }
+      if (filter === 'done') {
+        return task.completed;
+      }
+      return true;
+    });
+  }, [tasks, filter]);
+
+  const completedCount = useMemo(() => {
+    return tasks.filter((t) => t.completed).length;
+  }, [tasks]);
+
   return {
     tasks,
+    filteredTasks,
+    filter,
+    setFilter,
+    completedCount,
     loading,
     retrying,
     error,
