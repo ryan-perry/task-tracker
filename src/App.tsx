@@ -2,16 +2,9 @@ import { useEffect, useState } from 'react';
 import type { Task, TaskState } from './types';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
-import axios from 'axios';
 import { Container, Typography, Paper, Alert, CircularProgress, Box } from '@mui/material';
 import TaskFilter from './components/TaskFilter';
-
-interface TodoTask {
-  userId: number;
-  id: number;
-  title: string;
-  completed: boolean;
-}
+import { fetchTasks } from './api';
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -19,42 +12,23 @@ function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiTasks = await fetchTasks(10);
+      setTasks(apiTasks);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message ?? 'Failed to load tasks.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Simulate “real world” latency (optional)
-        await new Promise((r) => setTimeout(r, 2000));
-
-        const res = await axios.get('https://jsonplaceholder.typicode.com/todos?_limit=10');
-
-        if (cancelled) {
-          return;
-        }
-
-        const apiTasks: Task[] = res.data.map((t: TodoTask) => ({
-          id: t.id,
-          text: t.title,
-          completed: t.completed,
-        }));
-
-        setTasks(apiTasks);
-      } catch (e: any) {
-        if (!cancelled) {
-          setError(e?.message ?? 'Failed to load tasks.');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    loadTasks();
   }, []);
 
   // add task
