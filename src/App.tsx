@@ -106,26 +106,66 @@ function App() {
   }, [tasks]);
 
   const handleAddTask = async (text: string) => {
-    const newTask = await addTask(text);
-    setTasks((prev) => [...prev, newTask]);
+    const tempId = Date.now();
+    const optimisticTask: Task = {
+      id: tempId,
+      text,
+      completed: false,
+    };
+    setTasks((prev) => [...prev, optimisticTask]);
     showToast('Task added', 'success');
+
+    try {
+      const newTask = await addTask(text);
+      // replace temporary task id with real one from server
+      setTasks((prev) => prev.map((t) => (t.id === tempId ? newTask : t)));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      setError(e.message);
+      // rollback on failure
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+      showToast('Failed to add task', 'error');
+    }
   };
 
   const handleToggleTask = async (id: number) => {
+    const prevTasks = [...tasks];
     const task = tasks.find((t) => t.id === id);
     if (!task) {
       return;
     }
 
-    const updated = await toggleTask(id, !task.completed);
-    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    // update instantly
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
     showToast('Task updated', 'info');
+
+    try {
+      await toggleTask(id, !task.completed);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      // rollback
+      setError(e.message);
+      setTasks(prevTasks);
+      showToast('Failed to update task', 'error');
+    }
   };
 
   const handleDeleteTask = async (id: number) => {
-    await deleteTask(id);
+    const prevTasks = [...tasks];
+
+    // remove immediately
     setTasks((prev) => prev.filter((t) => t.id !== id));
     showToast('Task deleted', 'info');
+
+    try {
+      await deleteTask(id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      setError(e.message);
+      // rollback
+      setTasks(prevTasks);
+      showToast('Failed to delete task', 'error');
+    }
   };
 
   const filteredTasks = tasks.filter((task) => {
