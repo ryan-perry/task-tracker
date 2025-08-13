@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Stack, TextField, Button } from '@mui/material';
 
 interface TaskFormProps {
   onAdd: (text: string) => void;
@@ -22,13 +23,23 @@ export default function TaskForm({ onAdd }: TaskFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Add a task"
-        />
-        <button type="submit">Add</button>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            label="New Task"
+            variant="outlined"
+          />
+          <Button
+            type="submit"
+            variant="contained">
+            Add
+          </Button>
+        </Stack>
       </form>
     </>
   );

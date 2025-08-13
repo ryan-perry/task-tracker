@@ -1,4 +1,6 @@
 import type { Task } from '../types';
+import { IconButton, List, ListItem, ListItemText, Checkbox } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface TaskListProps {
   tasks: Task[];
@@ -7,31 +9,30 @@ interface TaskListProps {
 }
 
 export default function TaskList({ tasks, onToggle, onDelete }: TaskListProps) {
-  if (tasks.length === 0) {
-    return <p>No tasks yet</p>;
-  }
-
   return (
     <>
-      <ul>
+      <List>
         {tasks.map((task) => (
-          <li key={task.id}>
-            <span
-              style={{
-                textDecoration: task.completed ? 'line-through' : 'none',
-                cursor: 'pointer',
-              }}
-              onClick={() => onToggle(task.id)}>
-              {task.text}
-            </span>
-            <button
-              type="button"
-              onClick={() => onDelete(task.id)}>
-              Delete
-            </button>
-          </li>
+          <ListItem
+            key={task.id}
+            secondaryAction={
+              <IconButton
+                edge="end"
+                onClick={() => onDelete(task.id)}>
+                <DeleteIcon />
+              </IconButton>
+            }>
+            <Checkbox
+              checked={task.completed}
+              onChange={() => onToggle(task.id)}
+            />
+            <ListItemText
+              primary={task.text}
+              sx={{ textDecoration: task.completed ? 'line-through' : 'none' }}
+            />
+          </ListItem>
         ))}
-      </ul>
+      </List>
     </>
   );
 }
