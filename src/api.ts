@@ -1,21 +1,27 @@
 import axios from "axios";
 import type { Task } from "./types";
 
-interface TodoTask {
-  userId: number;
-  id: number;
-  title: string;
-  completed: boolean;
+const API_URL = 'http://localhost:3001';
+
+export async function fetchTasks() : Promise<Task[]> {
+  const res = await axios.get(`${API_URL}/tasks`);
+  return res.data;
 }
 
-export async function fetchTasks(limit: number = 5): Promise<Task[]> {
-  // Simulate “real world” latency
-        await new Promise((r) => setTimeout(r, 2000));
-  const res = await axios.get(`https://jsonplaceholder.typicode.com/todos?_limit=${limit}`);
+export async function addTask(text: string): Promise<Task> {
+  const newTask = {
+      text,
+      completed: false
+  };
+  const res = await axios.post(`${API_URL}/tasks`, newTask);
+  return res.data;
+}
 
-  return res.data.map((t: TodoTask) => ({
-    id: t.id,
-    text: t.title,
-    completed: t.completed,
-  }));
+export async function toggleTask(id: number, completed: boolean): Promise<Task> {
+  const res = await axios.patch(`${API_URL}/tasks/${id}`, { completed });
+  return res.data;
+}
+
+export async function deleteTask(id: number): Promise<void> {
+  await axios.delete(`${API_URL}/tasks/${id}`);
 }

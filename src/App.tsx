@@ -13,7 +13,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import TaskFilter from './components/TaskFilter';
-import { fetchTasks } from './api';
+import { fetchTasks, addTask, toggleTask, deleteTask } from './api';
 
 const STORAGE_KEY = 'task-tracker';
 
@@ -71,9 +71,12 @@ function App() {
         setLoading(true);
       }
       setError(null);
-      const apiTasks = await fetchTasks(10);
+      const apiTasks = await fetchTasks();
       setTasks(apiTasks);
       saveToStorage(apiTasks);
+      if (isRetry) {
+        showToast('Tasks refreshed', 'success');
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load tasks.');
@@ -102,27 +105,26 @@ function App() {
     saveToStorage(tasks);
   }, [tasks]);
 
-  // add task
-  const addTask = (text: string) => {
-    const newTask: Task = {
-      id: Date.now(),
-      text,
-      completed: false,
-    };
-
+  const handleAddTask = async (text: string) => {
+    const newTask = await addTask(text);
     setTasks((prev) => [...prev, newTask]);
     showToast('Task added', 'success');
   };
 
-  const toggleTask = (id: number) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task)),
-    );
+  const handleToggleTask = async (id: number) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) {
+      return;
+    }
+
+    const updated = await toggleTask(id, !task.completed);
+    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
     showToast('Task updated', 'info');
   };
 
-  const deleteTask = (id: number) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+  const handleDeleteTask = async (id: number) => {
+    await deleteTask(id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
     showToast('Task deleted', 'info');
   };
 
@@ -185,7 +187,7 @@ function App() {
           )}
 
           {/*   */}
-          <TaskForm onAdd={addTask} />
+          <TaskForm onAdd={handleAddTask} />
           <TaskFilter
             filter={filter}
             setFilter={setFilter}
@@ -204,8 +206,8 @@ function App() {
           ) : (
             <TaskList
               tasks={filteredTasks}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
+              onToggle={handleToggleTask}
+              onDelete={handleDeleteTask}
             />
           )}
         </Paper>
