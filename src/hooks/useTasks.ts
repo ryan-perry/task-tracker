@@ -16,11 +16,17 @@ export function useTasks() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
-  const [filter, setFilter] = useState<TaskState>('all');
-  const [search, setSearch] = useState<string>('');
-  const [sortBy, setSortBy] = useState<Sort>('newest');
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(5);
+  const [filter, setFilter] = useState<TaskState>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    () => (localStorage.getItem('filter') as any) || 'all',
+  );
+  const [search, setSearch] = useState<string>(() => localStorage.getItem('search') || '');
+  const [sortBy, setSortBy] = useState<Sort>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    () => (localStorage.getItem('sortBy') as any) || 'newest',
+  );
+  const [page, setPage] = useState(Number(localStorage.getItem('page')) || 1);
+  const [perPage, setPerPage] = useState(Number(localStorage.getItem('perPage')) || 5);
 
   // snackbar state
   const [snackbar, setSnackbar] = useState<SnackbarType>({
@@ -74,6 +80,38 @@ export function useTasks() {
   useEffect(() => {
     loadTasks();
   }, []);
+
+  // save preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem('filter', filter);
+  }, [filter]);
+
+  useEffect(() => {
+    localStorage.setItem('sortBy', sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    localStorage.setItem('perPage', String(perPage));
+  }, [perPage]);
+
+  useEffect(() => {
+    localStorage.setItem('page', String(page));
+  }, [page]);
+
+  useEffect(() => {
+    localStorage.setItem('search', search);
+  }, [search]);
+
+  // debounce search
+  const [debounceSearch, setDebounceSearch] = useState(search);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebounceSearch(search);
+      // reset to first page on new search
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   const handleAddTask = async (text: string) => {
     const tempId = Date.now();
@@ -150,8 +188,8 @@ export function useTasks() {
     }
 
     // search
-    if (search.trim() !== '') {
-      const lower = search.toLowerCase();
+    if (debounceSearch.trim() !== '') {
+      const lower = debounceSearch.toLowerCase();
       filtered = filtered.filter((t) => t.text.toLowerCase().includes(lower));
     }
 
@@ -172,7 +210,7 @@ export function useTasks() {
     });
 
     return filtered;
-  }, [tasks, filter, search, sortBy]);
+  }, [tasks, filter, debounceSearch, sortBy]);
 
   // pagination
   const paginatedTasks = useMemo(() => {
