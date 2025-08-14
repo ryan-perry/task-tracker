@@ -3,6 +3,7 @@ import type { Task, TaskState } from '../types';
 import { fetchTasks, addTask, toggleTask, deleteTask } from '../api';
 
 type Severity = 'success' | 'error' | 'info';
+type Sort = 'newest' | 'oldest' | 'completed' | 'pending';
 
 type SnackbarType = {
   open: boolean;
@@ -16,6 +17,10 @@ export function useTasks() {
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
   const [filter, setFilter] = useState<TaskState>('all');
+  const [search, setSearch] = useState<string>('');
+  const [sortBy, setSortBy] = useState<Sort>('newest');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(5);
 
   // snackbar state
   const [snackbar, setSnackbar] = useState<SnackbarType>({
@@ -134,16 +139,48 @@ export function useTasks() {
   };
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      if (filter === 'active') {
-        return !task.completed;
+    let filtered = tasks;
+
+    // filter
+    if (filter === 'active') {
+      filtered = filtered.filter((t) => !t.completed);
+    }
+    if (filter === 'done') {
+      filtered = filtered.filter((t) => t.completed);
+    }
+
+    // search
+    if (search.trim() !== '') {
+      const lower = search.toLowerCase();
+      filtered = filtered.filter((t) => t.text.toLowerCase().includes(lower));
+    }
+
+    // sort
+    filtered = filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return b.id - a.id;
+        case 'oldest':
+          return a.id - b.id;
+        case 'completed':
+          return Number(a.completed) - Number(b.completed);
+        case 'pending':
+          return Number(b.completed) - Number(a.completed);
+        default:
+          return 0;
       }
-      if (filter === 'done') {
-        return task.completed;
-      }
-      return true;
     });
-  }, [tasks, filter]);
+
+    return filtered;
+  }, [tasks, filter, search, sortBy]);
+
+  // pagination
+  const paginatedTasks = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filteredTasks.slice(start, start + perPage);
+  }, [filteredTasks, page, perPage]);
+
+  const totalPages = Math.ceil(filteredTasks.length / perPage);
 
   const completedCount = useMemo(() => {
     return tasks.filter((t) => t.completed).length;
@@ -154,6 +191,16 @@ export function useTasks() {
     filteredTasks,
     filter,
     setFilter,
+    page,
+    totalPages,
+    setPage,
+    perPage,
+    setPerPage,
+    paginatedTasks,
+    search,
+    setSearch,
+    sortBy,
+    setSortBy,
     completedCount,
     loading,
     retrying,
